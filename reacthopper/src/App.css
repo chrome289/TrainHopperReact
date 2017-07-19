@@ -1,0 +1,68 @@
+.App {
+  text-align: center;
+  height: 100%;
+  width: 100%;
+  background-image: url(background.jpeg); 
+  background-blend-mode: multiply; 
+  background-color: #343434;
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  display: inline-block;
+  position: absolute;
+  top: 30%;
+  left: 0%;
+  width: 100%;
+  font-family: Poiret+One;
+}
+
+.App-intro {
+  color: #fff;
+  font-weight: 300;
+  font-size: 1.5em;
+  padding: 16px;
+}
+
+.bottomDiv{
+  position: relative;
+  top: 60%;
+}
+
+.App-title{
+  color: #fff;
+  font-weight: 300;
+  font-size: 3.5em;
+  letter-spacing: 8px;
+}
+
+.buttonDiv{
+  text-align: center;
+  width: 40%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.buttons{
+  margin-top: 20px; 
+  background-color: #a9360c;
+  border-color: rgba(0, 66, 58, 0);
+}
+
+.buttons:hover, .buttons:focus, .buttons:active, .buttons.active, .open>.dropdown-toggle.buttons{
+  background-color: #6d2207;
+  box-shadow: none;
+  border-color: rgba(0, 66, 58, 0);
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
