@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import './App.css';
 import stationList from './station.json';
 
 import customTheme from './customTheme.js';
@@ -11,20 +10,19 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 
 
-import InputMoment from 'input-moment';
+//import InputMoment from 'input-moment';
 
 import moment from 'moment';
 
-// It's recommended to set locale in entry file globaly.
-
-import DateTimePicker from 'react-widgets/lib/DateTimePicker';
+/*import DateTimePicker from 'react-widgets/lib/DateTimePicker';
 import momentLocalizer from 'react-widgets/lib/localizers/moment';
 import 'react-widgets/dist/css/react-widgets.css'
-
+*/
 import {Motion, spring} from 'react-motion';
 
-import { DatePicker } from 'antd';
-import 'antd/dist/antd.css';
+import DatePicker from 'antd/lib/date-picker';
+import 'antd/lib/date-picker/style';
+
 import { LocaleProvider } from 'antd';
 import enUS from 'antd/lib/locale-provider/en_US';
 
@@ -32,10 +30,50 @@ import Modal from 'react-modal'
 import FaClose from 'react-icons/lib/fa/close'
 import Toggle from 'react-toggle'
 
-momentLocalizer(moment);
+import './App.css';
+
+import { Provider } from 'react-redux'
+import { createStore } from 'redux'
+
+import { SET_TIME, SET_STATION_1, SET_STATION_2} from './actions'
+import { setTime, setStation1, setStation2} from './actions'
+//momentLocalizer(moment);
 
 moment.locale('en-gb');
 injectTapEventPlugin();
+
+const initState={
+	time: 0,
+	station1: '',
+	station2: '',
+}
+
+function reduxReducer(state = initState, action){
+	switch (action.type) {
+		case SET_TIME:
+			return Object.assign({}, state, {
+        time: action.time
+      })
+		case SET_STATION_1:
+			return Object.assign({}, state, {
+        station1: action.station1
+      })
+    case SET_STATION_2:
+			return Object.assign({}, state, {
+        station2: action.station2
+      })
+		default:
+			return state;
+	}
+}
+
+let store = createStore(reduxReducer)
+
+console.log(store.getState());
+
+let unsubscribe = store.subscribe(() =>
+  console.log(store.getState())
+)
 
 let dataSource=[];
 
@@ -74,8 +112,8 @@ class App extends Component {
 				<Motion defaultStyle={{ top: 25}} style={{ top: spring(10,{stiffness: 140, damping: 20}) }}>
 					{ (style) =>
 						<div style={{ top: style.top+"%"}} className="App-header" key="1">
-							<h1 style={{ fontSize: (4-((25-style.top)/17.5))+"em" }} className="App-title">TRAINHOPPER</h1>
-							<p style={{ fontSize: (2-(((25-style.top)/17.5)/2))+"em" }} className="App-intro">A tool for finding train routes between cities</p>
+							<h1 style={{ fontSize: (3.5-((25-style.top)/20))+"rem" }} className="App-title">TRAINHOPPER</h1>
+							<p style={{ fontSize: (1.75-(((25-style.top)/20)/2))+"rem" }} className="App-intro">A tool for finding train routes between cities</p>
 						</div>
 					}
 				</Motion>
@@ -142,16 +180,21 @@ class SelectCities extends Component{
 	constructor(props){
 		super(props);
 		this.state = {
-			searchText: ''
+			searchText: '',
+			from: '',
+			to: ''
 		};
 		this.handleNavigation = this.handleNavigation.bind(this);
 	}
 
-	handleNewRequest = (a,b) => {
-		alert('called '+a+b)
-		this.setState({
-			searchText: '',
-		});
+	handleNewRequest1 = (a,b) => {
+		alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
+		store.dispatch(setStation1(a.split('(')[1].substring(1,a.split('(')[1].length-2)))
+	};
+
+	handleNewRequest2 = (a,b) => {
+		alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
+		store.dispatch(setStation2(a.split('(')[1].substring(1,a.split('(')[1].length-2)))
 	};
 
 	handleNavigation(){
@@ -174,8 +217,8 @@ class SelectCities extends Component{
 								openOnFocus={false}
 								maxSearchResults={3}
 								dataSource={dataSource}
-								onNewRequest={this.handleNewRequest}
-								style={{width:'70%'}}
+								onNewRequest={this.handleNewRequest1}
+								style={{float: "left", width: "40%", position: "relative",margin: "0px auto 0px 5%"}}
 							/>
 						</MuiThemeProvider>
 						<MuiThemeProvider muiTheme={getMuiTheme(customTheme)}>
@@ -185,8 +228,10 @@ class SelectCities extends Component{
 								openOnFocus={false}
 								maxSearchResults={3}
 								dataSource={dataSource}
-								onNewRequest={this.handleNewRequest}
-								style={{width:'70%'}}
+								onNewRequest={this.handleNewRequest2}
+								style={{float: "right", width: "40%", position: "relative",margin: "0px 5% 0px auto"}}
+								anchorOrigin={{vertical: 'bottom',horizontal: 'right'}}
+								targetOrigin={{vertical: 'top',horizontal: 'right'}}							
 							/>
 						</MuiThemeProvider>
 					</div>
@@ -198,20 +243,15 @@ class SelectOptions extends Component{
 	constructor(props){
 		super(props);
 		this.state = {
-			searchText: '',
+			time: 0,
 			isModalVisible: false,
 		};
 		this.handleNavigation = this.handleNavigation.bind(this);
 		this.handleModalOpen = this.handleModalOpen.bind(this);
 		this.handleModalClosed = this.handleModalClosed.bind(this);
+		this.onChange = this.onChange.bind(this);
+		this.onOk = this.onOk.bind(this);
 	}
-
-	handleNewRequest = (a,b) => {
-		alert('called '+a+b)
-		this.setState({
-			searchText: '',
-		});
-	};
 
 	handleNavigation(){
 		this.props.onHandleNavigation();
@@ -230,19 +270,25 @@ class SelectOptions extends Component{
 		});
 		
 	};
+	onChange(value, dateString) {
+		if(value!=null){
+			store.dispatch(setTime(value.valueOf()))
+			console.log('Selected Time: ', value.valueOf());
+			console.log('Formatted Selected Time: ', dateString);
+		}else{
+			store.dispatch(setTime(0))
+		}
+	}
+		
+	onOk(value) {
+		store.dispatch(setTime(value.valueOf()))
+		console.log('Selected Time: ', value.valueOf());
+	}
 
 	render(){
 		dataSource=[];
 		for(var x=0; x<stationList.stations.length;x++){
 			dataSource.push(stationList.stations[x]);
-		}
-		function onChange(value, dateString) {
-			console.log('Selected Time: ', value);
-			console.log('Formatted Selected Time: ', dateString);
-		}
-		
-		function onOk(value) {
-			console.log('onOk: ', value);
 		}
 	
 		return(
@@ -252,10 +298,10 @@ class SelectOptions extends Component{
 						<DatePicker
 							showTime
 							size="large"
-							format="MMMM DD,YYYY -- HH:mm:ss"
+							format="MMMM DD,'YY  HH:mm:ss"
 							placeholder="Select Date and Time"
-							onChange={onChange}
-							onOk={onOk}
+							onChange={this.onChange}
+							onOk={this.onOk}
 							className="datetimepickers"
 						/>
 					</LocaleProvider>
@@ -294,19 +340,20 @@ class ReactModal extends Component {
 			},
 			content : {
 				position                   : 'absolute',
-				top                        : '25%',
-				left                       : '30%',
-				right                      : '30%',
-				bottom                     : '25%',
+				top                        : '10%',
+				left                       : '10%',
+				right                      : '10%',
+				bottom                     : '10%',
 				border                     : '1px solid #ccc',
 				background                 : '#fff',
 				overflow                   : 'auto',
 				WebkitOverflowScrolling    : 'touch',
 				borderRadius               : '4px',
 				outline                    : 'none',
-				padding                    : '20px',
-				height										 : '50%'
-
+				padding                    : '1rem',
+				maxWidth									 : '600px',
+   			maxHeight									 : '600px',
+   			margin										 : 'auto'
 			}
 		};
 
@@ -317,50 +364,50 @@ class ReactModal extends Component {
 				contentLabel="Modal"
 				style={ModalStyle}
 			>
-				<div className="container" style={{height:"10%"}}>
-					<h3 style={{float: "left"}}>Filters and Preferences</h3>
-					<button className="btn btn-outline-primary buttons3" style={{float: "right", display: "inline-flex"}} onClick={this.props.isClosed}>
-						<FaClose style={{height: "1.4em"}}/> 
-						<p style={{marginLeft: "4px", height: "1em"}}>Close</p>
+				<div className="container" style={{height:"10%", display:"flex"}}>
+					<h3 style={{float: "left", margin:"auto auto auto 0"}}>Filters and Preferences</h3>
+					<button className="btn btn-outline-primary buttons3" style={{float: "right", display: "inline-flex", margin:"auto 0 auto auto"}} onClick={this.props.isClosed}>
+						<FaClose style={{height: "1.4rem"}}/> 
+						<p style={{marginLeft: "4px", height: "1rem"}}>Close</p>
 					</button>
 				</div>
-				<div className="form-check" style={{marginTop: "30px",marginLeft: "20px"}}>
-					<div style={{display: "inline-flex", marginLeft: "1em"}}>
+				<div className="form-check" style={{marginTop: "30px"}}>
+					<div style={{display: "inline-flex", marginLeft: "1rem"}}>
 					  <Toggle
 					    defaultChecked={false}
 					    icons={false}
 					    onChange={this.handleDirectTrains} />
-					  <p style={{margin: "auto", fontSize: "1.25em", marginLeft: "1em"}}>Show only Direct Trains</p>
+					  <p style={{margin: "auto", fontSize: "1rem", marginLeft: "1rem"}}>Show only Direct Trains</p>
 					</div>
 					<div style={{marginTop: "20px"}}>
 						<h6>Preferred Classes</h6>
-						<div clasNames="btn-group" data-toggle="buttons">
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> First AC
+						<div className="btn-group" data-toggle="buttons" style={{display: "block"}}>
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> First AC
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> Second AC
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> Second AC
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> Third AC
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> Third AC
 						  </label>
-							<label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> Sleeper
+							<label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> Sleeper
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> AC Chair Car
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> AC Chair Car
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> Second Class
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> Second Class
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> Economy
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> Economy
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> First Class
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> First Class
 						  </label>
-						  <label className="btn btn-outline-primary buttons4 active" style={{margin: "1em -0.5em 0em 1em"}}>
-						    <input type="checkbox" autocomplete="off"/> General
+						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" autoComplete="off"/> General
 						  </label>
 						</div>
 					</div>

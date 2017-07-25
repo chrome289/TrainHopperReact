@@ -1,15 +1,48 @@
+
+/* Extra small devices (phones, less than 768px) */
+/* No media query since this is the default in Bootstrap */
+
+/* Small devices (tablets, 768px and up) */
+html {
+  font-size: 12px;
+}
+
+@media (min-width: 576px) {
+  html,body {
+    font-size:12px;
+  }
+}
+
+@media (min-width: 768px) {
+  html,body {
+    font-size:14px;
+  }
+}
+
+@media (min-width: 992px) {
+  html,body {
+    font-size:16px;
+  }
+}
+
+@media (min-width: 1200px) {
+  html,body {;
+    font-size:18px;
+  }
+}
+
 .App {
   text-align: center;
   height: 100%;
   width: 100%;
-  background-image: url(background.jpeg); 
+  background: url(background.jpg) center/cover; 
   background-blend-mode: overlay; 
   background-color: #232323;
-  background-size: cover;
   background-repeat: no-repeat;
   position: relative;
   color: #fff;
 }
+
 
 .App-logo {
   animation: App-logo-spin infinite 20s linear;
@@ -17,18 +50,22 @@
 }
 
 .App-header {
+  margin: 0 auto;
+  text-align: center;
   display: inline-block;
   position: absolute;
   left: 0%;
-  top: 20%;
-  width: 100%;
+  right: 0%;
+  top: 25%;
+  width: 90%;
   font-family: 'Dosis';
 }
 
 .App-intro {
+  margin: 0 auto;
   color: #fff;
   font-weight: 300;
-  font-size: 2em;
+  font-size: 1.75rem;
   padding: 16px;
 }
 
@@ -38,10 +75,12 @@
 }
 
 .App-title{
+  margin: 0 auto;
+  margin-left: -0.3rem;
   color: #fff;
   font-weight: 300;
-  font-size: 4em;
-  letter-spacing: 0.3em;
+  font-size: 3.5rem;
+  letter-spacing: 0.4rem;
 }
 
 .startButton{
@@ -49,12 +88,40 @@
   top: 45%;
   left: 0%;
   width: 100%;
+  text-align: center;
+  margin: 0 auto;
 }
 
-.buttonDiv{
-  text-align: center;
-  width: 65%;
-  margin: 0 auto;
+@media (min-width: 576px) {
+  .buttonDiv{
+    text-align: center;
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .buttonDiv{
+    text-align: center;
+    width: 80%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 992px) {
+  .buttonDiv{
+    text-align: center;
+    width: 65%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  b.buttonDiv{
+    text-align: center;
+    width: 40%;
+    margin: 0 auto;
+  }
 }
 
 .buttons{
@@ -96,6 +163,7 @@
 }
 
 .buttons4{
+  padding: 0.6rem;
   background-color: #eee;
   border-color: #bbb;
   color: #bbb;
@@ -104,6 +172,7 @@
 }
 
 .buttons4:hover, .buttons4:active{
+  padding: 0.6rem;
   background-color: #fff;
   border-color: rgba(43, 43, 43, 1);
   color:#000;
@@ -112,6 +181,7 @@
 }
 
 .buttons4:hover{
+  padding: 0.6rem;
   background-color: #eee;
   border-color: #bbb;
   color: #bbb;
@@ -120,6 +190,7 @@
 }
 
 .buttons4:focus, .buttons4:active, .buttons4.active, .buttons4.selection, .open>.dropdown-toggle.buttons4{
+  padding: 0.6rem;
   background-color: #fff;
   border-color: rgba(43, 43, 43, 1);
   color:#000;
@@ -146,6 +217,10 @@
 .searchBox{
   padding: 4px;
   margin: 0px;
+  display: inline-block;
+    position: relative;
+    width: 100% !important
+    
 }
 
 .datetimepickers{

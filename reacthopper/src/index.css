@@ -1,6 +1,11 @@
 body {
-  margin: 0;
-  padding: 0;
+  margin: 0px;
+  padding: 0px;
   font-family: 'Open Sans', sans-serif;
 }
-
+html{
+	height: 100%;
+}
+#footer .content p {
+    margin-bottom: 0
+}
