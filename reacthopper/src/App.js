@@ -20,9 +20,7 @@ import 'react-widgets/dist/css/react-widgets.css'
 */
 import {Motion, spring} from 'react-motion';
 
-import DatePicker from 'antd/lib/date-picker';
-import 'antd/lib/date-picker/style';
-
+import { DatePicker } from 'antd';
 import { LocaleProvider } from 'antd';
 import enUS from 'antd/lib/locale-provider/en_US';
 
@@ -33,41 +31,22 @@ import Toggle from 'react-toggle'
 import './App.css';
 
 import { Provider } from 'react-redux'
-import { createStore } from 'redux'
-
-import { SET_TIME, SET_STATION_1, SET_STATION_2} from './actions'
-import { setTime, setStation1, setStation2} from './actions'
+import { setTime, setStation1, setStation2 ,fetchRoutes, setOnlyDirect, setClasses} from './actions'
+import ReduxReducer from './reducers.js'
+import thunkMiddleware from 'redux-thunk'
+import { createLogger } from 'redux-logger'
+import { createStore, applyMiddleware } from 'redux'
 //momentLocalizer(moment);
 
 moment.locale('en-gb');
 injectTapEventPlugin();
 
-const initState={
-	time: 0,
-	station1: '',
-	station2: '',
-}
-
-function reduxReducer(state = initState, action){
-	switch (action.type) {
-		case SET_TIME:
-			return Object.assign({}, state, {
-        time: action.time
-      })
-		case SET_STATION_1:
-			return Object.assign({}, state, {
-        station1: action.station1
-      })
-    case SET_STATION_2:
-			return Object.assign({}, state, {
-        station2: action.station2
-      })
-		default:
-			return state;
-	}
-}
-
-let store = createStore(reduxReducer)
+const loggerMiddleware = createLogger()
+let store = createStore(ReduxReducer,
+  applyMiddleware(
+    thunkMiddleware,
+    loggerMiddleware
+  ))
 
 console.log(store.getState());
 
@@ -188,12 +167,12 @@ class SelectCities extends Component{
 	}
 
 	handleNewRequest1 = (a,b) => {
-		alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
+		//alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
 		store.dispatch(setStation1(a.split('(')[1].substring(1,a.split('(')[1].length-2)))
 	};
 
 	handleNewRequest2 = (a,b) => {
-		alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
+		//alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
 		store.dispatch(setStation2(a.split('(')[1].substring(1,a.split('(')[1].length-2)))
 	};
 
@@ -215,7 +194,7 @@ class SelectCities extends Component{
 								floatingLabelText="From"
 								filter={AutoComplete.caseInsensitiveFilter}
 								openOnFocus={false}
-								maxSearchResults={3}
+								maxSearchResults={5}
 								dataSource={dataSource}
 								onNewRequest={this.handleNewRequest1}
 								style={{float: "left", width: "40%", position: "relative",margin: "0px auto 0px 5%"}}
@@ -226,7 +205,7 @@ class SelectCities extends Component{
 								floatingLabelText="To"
 								filter={AutoComplete.caseInsensitiveFilter}
 								openOnFocus={false}
-								maxSearchResults={3}
+								maxSearchResults={5}
 								dataSource={dataSource}
 								onNewRequest={this.handleNewRequest2}
 								style={{float: "right", width: "40%", position: "relative",margin: "0px 5% 0px auto"}}
@@ -254,7 +233,10 @@ class SelectOptions extends Component{
 	}
 
 	handleNavigation(){
-		this.props.onHandleNavigation();
+		const tempState=store.getState();
+		store
+  		.dispatch(fetchRoutes(tempState.station1,tempState.station2,tempState.time))
+  		.then(() => console.log(store.getState()))
 	};
 
 	handleModalOpen(){
@@ -322,9 +304,23 @@ class ReactModal extends Component {
 	
 	constructor(props) {
 		super(props);
+		this.handleDirectTrains = this.handleDirectTrains.bind(this);
+		this.handleClassChange = this.handleClassChange.bind(this);
+	}
 
-		this.state = {
-		};
+	handleDirectTrains(){
+		const tempState = store.getState();
+		store.dispatch(setOnlyDirect(!tempState.onlyDirect))
+	}
+
+	handleClassChange(event){
+		const classe = event.target.value;
+		const tempState = store.getState();
+		console.log(tempState.classes.indexOf(classe) +"%%"+classe)
+		if(tempState.classes.indexOf(classe)==-1)
+			store.dispatch(setClasses(tempState.classes.push(classe)))
+		else
+			store.dispatch(setClasses(tempState.classes.splice(tempState.classes.indexOf(classe),1)))
 	}
 
 	render(){
@@ -374,7 +370,7 @@ class ReactModal extends Component {
 				<div className="form-check" style={{marginTop: "30px"}}>
 					<div style={{display: "inline-flex", marginLeft: "1rem"}}>
 					  <Toggle
-					    defaultChecked={false}
+					    defaultChecked={true}
 					    icons={false}
 					    onChange={this.handleDirectTrains} />
 					  <p style={{margin: "auto", fontSize: "1rem", marginLeft: "1rem"}}>Show only Direct Trains</p>
@@ -382,33 +378,33 @@ class ReactModal extends Component {
 					<div style={{marginTop: "20px"}}>
 						<h6>Preferred Classes</h6>
 						<div className="btn-group" data-toggle="buttons" style={{display: "block"}}>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> First AC
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> Second AC
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> Third AC
-						  </label>
-							<label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> Sleeper
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> AC Chair Car
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> Second Class
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> Economy
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> First Class
-						  </label>
-						  <label className="btn btn-outline-primary btn-sm buttons4 active" style={{margin: "1em -0.5em 0em 1rem"}}>
-						    <input type="checkbox" autoComplete="off"/> General
-						  </label>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="a1" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> First AC
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="a2" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> Second AC
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="a3" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> Third AC
+						  </button>
+							<button className="btn btn-outline-primary btn-sm buttons4 active" value="sl" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> Sleeper
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="cc" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> AC Chair Car
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="s2" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> Second Class
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="e3" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> Economy
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="fc" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> First Class
+						  </button>
+						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="gen" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						    <input type="checkbox" value="1" /> General
+						  </button>
 						</div>
 					</div>
 				</div>
