@@ -7,28 +7,30 @@ export const SET_STATION_2 = 'SET_STATION_2'
 export const SET_ONLY_DIRECT = 'SET_ONLY_DIRECT'
 export const SET_CLASSES = 'SET_CLASSES'
 
+export const REQUEST_ROUTES = 'REQUEST_ROUTES'
+export const RECEIVE_ROUTES = 'RECEIVE_ROUTES'
+
 export function setTime(time){
-	return { type: 'SET_TIME', time}
+	return { type: 'SET_TIME', time: time}
 }
 
 export function setStation1(station1){
-	return { type: 'SET_STATION_1', station1}
+	return { type: 'SET_STATION_1', station1:station1}
 }
 
 export function setStation2(station2){
-	return { type: 'SET_STATION_2', station2}
+	return { type: 'SET_STATION_2', station2: station2}
 }
 
 export function setOnlyDirect(onlyDirect){
-	return { type: 'SET_ONLY_DIRECT', onlyDirect}
+	return { type: 'SET_ONLY_DIRECT', onlyDirect: onlyDirect}
 }
 
 export function setClasses(classes){
-	return { type: 'SET_CLASSES, classes'}
+	return { type: 'SET_CLASSES', classes: classes}
 }
 
-export const REQUEST_ROUTES = 'REQUEST_ROUTES'
-function requestRoutes(station1, station2, date) {
+export function requestRoutes(station1, station2, date) {
   return {
     type: REQUEST_ROUTES,
     station1: station1,
@@ -37,8 +39,7 @@ function requestRoutes(station1, station2, date) {
   }
 }
 
-export const RECEIVE_ROUTES = 'RECEIVE_ROUTES'
-function receiveRoutes(json) {
+export function receiveRoutes(json) {
 	console.log(json)
   return {
     type: RECEIVE_ROUTES,

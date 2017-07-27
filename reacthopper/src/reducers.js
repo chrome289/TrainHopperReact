@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux'
 
+import PropTypes from 'prop-types';
 import { SET_TIME, SET_STATION_1, SET_STATION_2
 	, FETCH_ROUTES, REQUEST_ROUTES, RECEIVE_ROUTES
 	, SET_CLASSES, SET_ONLY_DIRECT} from './actions'
@@ -10,8 +11,16 @@ const initState={
 	station2: '',
 	isFetching: false,
 	onlyDirect: true,
-	classes: ['a1','a2','a3','sl','cc','s2','e3','gen'],
+	classes: ['a1','a2','a3','sl','cc','s2','e3', 'fc', 'gen'],
 	routes: [],
+    setTime: PropTypes.func,
+    setStation1: PropTypes.func,
+    setStation2: PropTypes.func,
+    setOnlyDirect: PropTypes.func,
+    setClasses: PropTypes.func,
+    requestRoutes: PropTypes.func,
+    receiveRoutes: PropTypes.func,
+    fetchRoutes: PropTypes.func,
 }
 
 function ReduxReducer(state = initState, action){

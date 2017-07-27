@@ -8,6 +8,8 @@ import AutoComplete from 'material-ui/AutoComplete';
 import MenuItem from 'material-ui/MenuItem';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import injectTapEventPlugin from 'react-tap-event-plugin';
+import PropTypes from 'prop-types';
+import {setTime,setStation1,setStation2,setOnlyDirect,setClasses,requestRoutes,receiveRoutes,fetchRoutes} from './actions'
 
 
 //import InputMoment from 'input-moment';
@@ -31,32 +33,17 @@ import Toggle from 'react-toggle'
 import './App.css';
 
 import { Provider } from 'react-redux'
-import { setTime, setStation1, setStation2 ,fetchRoutes, setOnlyDirect, setClasses} from './actions'
-import ReduxReducer from './reducers.js'
-import thunkMiddleware from 'redux-thunk'
-import { createLogger } from 'redux-logger'
-import { createStore, applyMiddleware } from 'redux'
+
 //momentLocalizer(moment);
+import { connect } from 'react-redux'
 
 moment.locale('en-gb');
 injectTapEventPlugin();
 
-const loggerMiddleware = createLogger()
-let store = createStore(ReduxReducer,
-  applyMiddleware(
-    thunkMiddleware,
-    loggerMiddleware
-  ))
-
-console.log(store.getState());
-
-let unsubscribe = store.subscribe(() =>
-  console.log(store.getState())
-)
 
 let dataSource=[];
 
-class App extends Component {
+class App extends Component{
 	constructor(props){
 		super(props);
 		this.showSearch = this.showSearch.bind(this);
@@ -77,7 +64,7 @@ class App extends Component {
 	getHeader(){
 		if(!this.state.isSearchVisible){
 			return (
-				<Motion defaultStyle={{ top: 25 }} style={{ top: spring(25,{stiffness: 200, damping: 20}) }}>
+				<Motion defaultStyle={{ top: 25 }} style={{ top: spring(25,{stiffness: 200, damping: 25}) }}>
 					{ (style) =>
 						<div style={{top: style.top+"%"}} className="App-header" key="1">
 							<h1 className="App-title">TRAINHOPPER</h1>
@@ -88,7 +75,7 @@ class App extends Component {
 			);
 		}else{
 			return (
-				<Motion defaultStyle={{ top: 25}} style={{ top: spring(10,{stiffness: 140, damping: 20}) }}>
+				<Motion defaultStyle={{ top: 25}} style={{ top: spring(10,{stiffness: 200, damping: 25}) }}>
 					{ (style) =>
 						<div style={{ top: style.top+"%"}} className="App-header" key="1">
 							<h1 style={{ fontSize: (3.5-((25-style.top)/20))+"rem" }} className="App-title">TRAINHOPPER</h1>
@@ -103,17 +90,27 @@ class App extends Component {
 	getBody(){
 		if(this.state.isSearchVisible){
 			return (
-				<Motion defaultStyle={{ top: 50 }} style={{ top: spring(30,{stiffness: 140, damping: 20}) }}>
+				<Motion defaultStyle={{ top: 50 }} style={{ top: spring(30,{stiffness: 200, damping: 25}) }}>
 				{ (style) =>
 					<div style={{top: style.top+"%"}} className="startButton" key="3">
-						<SearchUI/>
+						<SearchUI setTime= {this.props.setTime} 
+						fetchRoutes={this.props.fetchRoutes} 
+						station1={this.props.station1}
+						station2={this.props.station2}
+						setStation1={this.props.setStation1}
+						setStation2={this.props.setStation2}
+						setOnlyDirect={this.props.setOnlyDirect}
+						setClasses={this.props.setClasses}
+						onlyDirect={this.props.onlyDirect}
+						classes={this.props.classes}
+						time={this.props.time}/>
 					</div>
 				}
 				</Motion>
 			);
 		}else{
 			return (
-				<Motion defaultStyle={{ top: 45 }} style={{ top: spring(45,{stiffness: 140, damping: 20}) }}>
+				<Motion defaultStyle={{ top: 45 }} style={{ top: spring(45,{stiffness: 200, damping: 25}) }}>
 				{ (style) =>
 					<div style={{top: style.top+"%"}} className="startButton">
 						<button type="button" className="btn btn-primary btn-lg buttons" onClick={this.showSearch}>Start</button>
@@ -132,7 +129,25 @@ class App extends Component {
 			</div>
 		);
 	}
-}
+};
+
+App.propTypes= {
+  	time: PropTypes.number,
+		station1: PropTypes.string,
+		station2: PropTypes.string,
+		isFetching: PropTypes.bool,
+		onlyDirect: PropTypes.bool,
+		classes: PropTypes.array,
+		routes: PropTypes.array,
+    setTime: PropTypes.func,
+    setStation1: PropTypes.func,
+    setStation2: PropTypes.func,
+    setOnlyDirect: PropTypes.func,
+    setClasses: PropTypes.func,
+    requestRoutes: PropTypes.func,
+    receiveRoutes: PropTypes.func,
+    fetchRoutes: PropTypes.func,
+};
 
 
 class SearchUI extends Component{
@@ -148,8 +163,21 @@ class SearchUI extends Component{
 	render(){
 		return(
 			<div>
-				<SelectCities onHandleNavigation={this.handleNavigation}/>
-				<SelectOptions onHandleNavigation={this.handleNavigation}/>
+				<SelectCities
+						setStation1={this.props.setStation1}
+						setStation2={this.props.setStation2}
+						onHandleNavigation={this.handleNavigation}/>
+				<SelectOptions 
+						setTime= {this.props.setTime} 
+						fetchRoutes={this.props.fetchRoutes} 
+						station1={this.props.station1}
+						station2={this.props.station2}
+						time={this.props.time}
+						setOnlyDirect={this.props.setOnlyDirect}
+						setClasses={this.props.setClasses}
+						onlyDirect={this.props.onlyDirect}
+						classes={this.props.classes}
+						onHandleNavigation={this.handleNavigation}/>
 			</div>
 		);
 	}
@@ -168,12 +196,12 @@ class SelectCities extends Component{
 
 	handleNewRequest1 = (a,b) => {
 		//alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
-		store.dispatch(setStation1(a.split('(')[1].substring(1,a.split('(')[1].length-2)))
+		this.props.setStation1(a.split('(')[1].substring(1,a.split('(')[1].length-2))
 	};
 
 	handleNewRequest2 = (a,b) => {
 		//alert('called '+a.split('(')[1].substring(1,a.split('(')[1].length-2))
-		store.dispatch(setStation2(a.split('(')[1].substring(1,a.split('(')[1].length-2)))
+		this.props.setStation2(a.split('(')[1].substring(1,a.split('(')[1].length-2))
 	};
 
 	handleNavigation(){
@@ -233,10 +261,7 @@ class SelectOptions extends Component{
 	}
 
 	handleNavigation(){
-		const tempState=store.getState();
-		store
-  		.dispatch(fetchRoutes(tempState.station1,tempState.station2,tempState.time))
-  		.then(() => console.log(store.getState()))
+		this.props.fetchRoutes(this.props.station1,this.props.station2,this.props.time)
 	};
 
 	handleModalOpen(){
@@ -254,16 +279,16 @@ class SelectOptions extends Component{
 	};
 	onChange(value, dateString) {
 		if(value!=null){
-			store.dispatch(setTime(value.valueOf()))
+			this.props.setTime(value.valueOf())
 			console.log('Selected Time: ', value.valueOf());
 			console.log('Formatted Selected Time: ', dateString);
 		}else{
-			store.dispatch(setTime(0))
+			this.props.setTime(0)
 		}
 	}
 		
 	onOk(value) {
-		store.dispatch(setTime(value.valueOf()))
+		this.props.setTime(value.valueOf())
 		console.log('Selected Time: ', value.valueOf());
 	}
 
@@ -294,7 +319,13 @@ class SelectOptions extends Component{
 				<div className="input-group buttonDiv">
 					<button type="button" className="btn btn-outline-primary btn-lg buttons2" onClick={this.handleNavigation}>Search</button>
 				</div>
-				<ReactModal isOpen={this.state.isModalVisible} isClosed={this.handleModalClosed}/>
+				<ReactModal 
+						setOnlyDirect={this.props.setOnlyDirect}
+						setClasses={this.props.setClasses}
+						onlyDirect={this.props.onlyDirect}
+						classes={this.props.classes}
+						isOpen={this.state.isModalVisible} 
+						isClosed={this.handleModalClosed}/>
 			</div>
 		);
 	}
@@ -309,18 +340,18 @@ class ReactModal extends Component {
 	}
 
 	handleDirectTrains(){
-		const tempState = store.getState();
-		store.dispatch(setOnlyDirect(!tempState.onlyDirect))
+		this.props.setOnlyDirect(!this.props.onlyDirect)
 	}
 
 	handleClassChange(event){
 		const classe = event.target.value;
-		const tempState = store.getState();
-		console.log(tempState.classes.indexOf(classe) +"%%"+classe)
-		if(tempState.classes.indexOf(classe)==-1)
-			store.dispatch(setClasses(tempState.classes.push(classe)))
+		console.log(this.props.classes.indexOf(classe) +"%%"+classe)
+		let tempClasses = this.props.classes;
+		if(this.props.classes.indexOf(classe)==-1)
+			this.props.classes.push(classe)
 		else
-			store.dispatch(setClasses(tempState.classes.splice(tempState.classes.indexOf(classe),1)))
+			this.props.classes.splice(this.props.classes.indexOf(classe),1)
+		this.props.setClasses(this.props.classes)
 	}
 
 	render(){
@@ -353,6 +384,9 @@ class ReactModal extends Component {
 			}
 		};
 
+		const buttonClassesActive = "btn btn-outline-primary btn-sm buttons4 active";
+		const buttonClassesDisabled = "btn btn-outline-primary btn-sm buttons4";
+
 		return (
 			<Modal
 				isOpen={this.props.isOpen}
@@ -370,7 +404,7 @@ class ReactModal extends Component {
 				<div className="form-check" style={{marginTop: "30px"}}>
 					<div style={{display: "inline-flex", marginLeft: "1rem"}}>
 					  <Toggle
-					    defaultChecked={true}
+					    checked={this.props.onlyDirect}
 					    icons={false}
 					    onChange={this.handleDirectTrains} />
 					  <p style={{margin: "auto", fontSize: "1rem", marginLeft: "1rem"}}>Show only Direct Trains</p>
@@ -378,31 +412,31 @@ class ReactModal extends Component {
 					<div style={{marginTop: "20px"}}>
 						<h6>Preferred Classes</h6>
 						<div className="btn-group" data-toggle="buttons" style={{display: "block"}}>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="a1" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('a1')>=0)? buttonClassesActive: buttonClassesDisabled} value="a1" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> First AC
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="a2" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('a2')>=0)? buttonClassesActive: buttonClassesDisabled} value="a2" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> Second AC
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="a3" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('a3')>=0)? buttonClassesActive: buttonClassesDisabled} value="a3" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> Third AC
 						  </button>
-							<button className="btn btn-outline-primary btn-sm buttons4 active" value="sl" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+							<button className= {((this.props.classes).indexOf('sl')>=0)? buttonClassesActive: buttonClassesDisabled} value="sl" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> Sleeper
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="cc" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('cc')>=0)? buttonClassesActive: buttonClassesDisabled} value="cc" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> AC Chair Car
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="s2" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('s2')>=0)? buttonClassesActive: buttonClassesDisabled} value="s2" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> Second Class
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="e3" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('e3')>=0)? buttonClassesActive: buttonClassesDisabled} value="e3" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> Economy
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="fc" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('fc')>=0)? buttonClassesActive: buttonClassesDisabled} value="fc" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> First Class
 						  </button>
-						  <button className="btn btn-outline-primary btn-sm buttons4 active" value="gen" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
+						  <button className= {((this.props.classes).indexOf('gen')>=0)? buttonClassesActive: buttonClassesDisabled} value="gen" onClick={this.handleClassChange} style={{margin: "1em -0.5em 0em 1rem"}}>
 						    <input type="checkbox" value="1" /> General
 						  </button>
 						</div>
@@ -413,4 +447,32 @@ class ReactModal extends Component {
 	}
 }
 
-export default App;
+const mapStateToProps = state => {
+  return {
+  	time: state.time,
+		station1: state.station1,
+		station2: state.station2,
+		isFetching: state.isFetching,
+		onlyDirect: state.onlyDirect,
+		classes: state.classes,
+		routes: state.routes,
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    setTime: (time) => {dispatch(setTime(time))},
+    setStation1: (station1) => {dispatch(setStation1(station1))},
+    setStation2: (station2) => {dispatch(setStation2(station2))},
+    setOnlyDirect: (onlyDirect) => {dispatch(setOnlyDirect(onlyDirect))},
+    setClasses: (classes) => {dispatch(setClasses(classes))},
+    requestRoutes: (station1, station2, date) => {dispatch(requestRoutes(station1, station2, date))},
+    receiveRoutes: (json) => {dispatch(receiveRoutes(json))},
+    fetchRoutes: (station1, station2, date) => {dispatch(fetchRoutes(station1, station2, date))},
+  }
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);
