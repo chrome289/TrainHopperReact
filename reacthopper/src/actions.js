@@ -9,6 +9,7 @@ export const SET_CLASSES = 'SET_CLASSES'
 
 export const REQUEST_ROUTES = 'REQUEST_ROUTES'
 export const RECEIVE_ROUTES = 'RECEIVE_ROUTES'
+export const SHOW_RESULTS = 'SHOW_RESULTS'
 
 export function setTime(time){
 	return { type: 'SET_TIME', time: time}
@@ -30,6 +31,10 @@ export function setClasses(classes){
 	return { type: 'SET_CLASSES', classes: classes}
 }
 
+export function setShowResults(value){
+	return { type: 'SHOW_RESULTS', value: value}
+}
+
 export function requestRoutes(station1, station2, date) {
   return {
     type: REQUEST_ROUTES,
@@ -40,7 +45,7 @@ export function requestRoutes(station1, station2, date) {
 }
 
 export function receiveRoutes(json) {
-	console.log(json)
+	console.log(json);
   return {
     type: RECEIVE_ROUTES,
     routes: json.result,
@@ -60,6 +65,7 @@ export function fetchRoutes(station1, station2, date){
     .then((responseData) => { // responseData = undefined
         console.log(responseData)
         dispatch(receiveRoutes(responseData))
+        dispatch(setShowResults(true));
     })
 	})
 }

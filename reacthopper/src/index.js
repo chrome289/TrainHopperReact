@@ -21,6 +21,7 @@ const initState={
 	station2: '',
 	isFetching: false,
 	onlyDirect: true,
+	showResult: false,
 	classes: ['a1','a2','a3','sl','cc','s2','e3', 'fc', 'gen'],
 	routes: [],
     setTime: PropTypes.func,

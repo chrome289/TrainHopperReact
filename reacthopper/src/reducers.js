@@ -3,7 +3,7 @@ import { combineReducers } from 'redux'
 import PropTypes from 'prop-types';
 import { SET_TIME, SET_STATION_1, SET_STATION_2
 	, FETCH_ROUTES, REQUEST_ROUTES, RECEIVE_ROUTES
-	, SET_CLASSES, SET_ONLY_DIRECT} from './actions'
+	, SET_CLASSES, SET_ONLY_DIRECT, SHOW_RESULTS} from './actions'
 
 const initState={
 	time: 0,
@@ -11,6 +11,7 @@ const initState={
 	station2: '',
 	isFetching: false,
 	onlyDirect: true,
+	showResult: false,
 	classes: ['a1','a2','a3','sl','cc','s2','e3', 'fc', 'gen'],
 	routes: [],
     setTime: PropTypes.func,
@@ -53,6 +54,10 @@ function ReduxReducer(state = initState, action){
     case SET_CLASSES:
      	return Object.assign({}, state, {
      		classes: action.classes,
+     	})
+    case SHOW_RESULTS:
+     	return Object.assign({}, state, {
+     		showResult: action.value,
      	})
     default:
     	return state;

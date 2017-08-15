@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import stationList from './station.json';
+import SearchResults from './SearchResults'
 
 import customTheme from './customTheme.js';
 
@@ -9,7 +10,9 @@ import MenuItem from 'material-ui/MenuItem';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import PropTypes from 'prop-types';
-import {setTime,setStation1,setStation2,setOnlyDirect,setClasses,requestRoutes,receiveRoutes,fetchRoutes} from './actions'
+import {setTime,setStation1,setStation2
+	,setOnlyDirect,setClasses
+	,requestRoutes,receiveRoutes,fetchRoutes} from './actions'
 
 
 //import InputMoment from 'input-moment';
@@ -62,7 +65,19 @@ class App extends Component{
 	}
 
 	getHeader(){
-		if(!this.state.isSearchVisible){
+		if(this.props.showResult){
+			return (
+				<Motion defaultStyle={{ top: 10}} style={{ top: spring(5,{stiffness: 200, damping: 25}) }}>
+					{ (style) =>
+						<div style={{ top: style.top+"%"}} className="App-header" key="1">
+							<h1 style={{ fontSize: (3.5-((25-style.top)/15))+"rem" }} className="App-title">TRAINHOPPER</h1>
+							<p style={{ fontSize: (1.75-1.75)+"rem" }} className="App-intro">A tool for finding train routes between cities</p>
+						</div>
+					}
+				</Motion>
+			);
+		}
+		else if(!this.state.isSearchVisible){
 			return (
 				<Motion defaultStyle={{ top: 25 }} style={{ top: spring(25,{stiffness: 200, damping: 25}) }}>
 					{ (style) =>
@@ -88,22 +103,33 @@ class App extends Component{
 	}
 
 	getBody(){
-		if(this.state.isSearchVisible){
+		if(this.props.showResult){
+			return (
+				<Motion defaultStyle={{ top: 0}} style={{ top: spring( 90,{stiffness: 200, damping: 25}, 30.0) }}>
+					{ (style) =>
+						<div style={{ width: style.top+"%"}} className="searchResults" key="4">
+							<SearchResults routes= {this.props.routes}/>
+						</div>
+					}
+				</Motion>
+			);
+		}
+		else if(this.state.isSearchVisible){
 			return (
 				<Motion defaultStyle={{ top: 50 }} style={{ top: spring(30,{stiffness: 200, damping: 25}) }}>
 				{ (style) =>
-					<div style={{top: style.top+"%"}} className="startButton" key="3">
-						<SearchUI setTime= {this.props.setTime} 
-						fetchRoutes={this.props.fetchRoutes} 
-						station1={this.props.station1}
-						station2={this.props.station2}
-						setStation1={this.props.setStation1}
-						setStation2={this.props.setStation2}
-						setOnlyDirect={this.props.setOnlyDirect}
-						setClasses={this.props.setClasses}
-						onlyDirect={this.props.onlyDirect}
-						classes={this.props.classes}
-						time={this.props.time}/>
+					<div style={{top: style.top+"%"}} key="3" className="startButton" >
+							<SearchUI setTime= {this.props.setTime} 
+							fetchRoutes={this.props.fetchRoutes} 
+							station1={this.props.station1}
+							station2={this.props.station2}
+							setStation1={this.props.setStation1}
+							setStation2={this.props.setStation2}
+							setOnlyDirect={this.props.setOnlyDirect}
+							setClasses={this.props.setClasses}
+							onlyDirect={this.props.onlyDirect}
+							classes={this.props.classes}
+							time={this.props.time}/>
 					</div>
 				}
 				</Motion>
@@ -147,6 +173,7 @@ App.propTypes= {
     requestRoutes: PropTypes.func,
     receiveRoutes: PropTypes.func,
     fetchRoutes: PropTypes.func,
+    showResult: PropTypes.bool,
 };
 
 
@@ -456,6 +483,7 @@ const mapStateToProps = state => {
 		onlyDirect: state.onlyDirect,
 		classes: state.classes,
 		routes: state.routes,
+		showResult: state.showResult,
   }
 }
 

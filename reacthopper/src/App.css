@@ -41,6 +41,7 @@ html {
   background-repeat: no-repeat;
   position: relative;
   color: #fff;
+  overflow-y: hidden;
 }
 
 
@@ -226,6 +227,72 @@ html {
 .datetimepickers{
   margin: 48px 16px 24px 16px;
 }
+
+.searchResults{
+  width: 0%;
+  bottom: 4%;
+  overflow-y: hidden;
+  margin: 0px auto;
+  text-align: center;
+  display: inline-block;
+  position: absolute;
+  left: 0%;
+  right: 0%;
+  background-color: rgba(20, 20, 20, 0.7);
+  top: 15%;
+  border-radius: 0.25rem;
+}
+
+.searchHeading{
+  padding: 1rem;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.searchResult{
+  width: 95%;
+  display: inline-flex;
+  background-color: #fff;
+  margin: 1px auto;
+  font-family: 'Roboto', sans-serif;
+}
+
+.searchDiv1{
+  vertical-align: middle;
+  display: table;
+  margin: auto 0px;
+  color: #232323;
+}
+
+.arrow_box {
+  position: relative;
+  background: #d5a520;
+  border: 1px solid #c2e1f5;
+}
+.arrow_box:after, .arrow_box:before {
+  left: 100%;
+  top: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.arrow_box:after {
+  border-color: rgba(213, 165, 32, 0);
+  border-left-color: #d5a520;
+  border-width: 10px;
+  margin-top: -10px;
+}
+.arrow_box:before {
+  border-color: rgba(194, 225, 245, 0);
+  border-left-color: #c2e1f5;
+  border-width: 11px;
+  margin-top: -11px;
+}
+
 
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
