@@ -9,10 +9,14 @@ var mysql = require('mysql');
 const cacheInstance = new NodeCache();
 var connection = mysql.createConnection(
 		{
-			host     : 'localhost',
+			/*host     : 'localhost',
 			user     : 'root',
 			password : '28julius9',
-			database : 'project',
+			database : 'project',*/
+			host     : process.env.RDS_HOSTNAME,
+  		user     : process.env.RDS_USERNAME,
+ 		 	password : process.env.RDS_PASSWORD,
+ 			port     : process.env.RDS_PORT
 		}
 );
 
