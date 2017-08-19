@@ -96,7 +96,7 @@ app.post('/paginationdroid', function(req, res){
 					tenresult[y] = result[x];
 				}
 			}
-			console.log('pagination page no. '+ page)
+			console.log('pagination page no. '+ page +' for '+queryID)
 			res.setHeader('Content-Type', 'application/json');
 			res.status(200).send(JSON.stringify(tenresult));		
 		}else{
@@ -119,17 +119,20 @@ app.post('/resultsdroid', function (req, res) {
 
 		const FROM = req.body.from.toUpperCase();
 		const TO = req.body.to.toUpperCase();
-		const DATE = req.body.date;
-		const TIME = req.body.time;
 		const DIRECT = req.body.direct;
 		const CLASSES = req.body.classes;
 		const SORT = req.body.sort;
 
-		console.log('Request for '+ req.body.from+','+ req.body.to+','+ req.body.date+','+ req.body.time+','+ req.body.sort);
+		var tempDate = new Date(Number(req.body.time));
+		console.log(tempDate+"***"+tempDate.getFullYear()+ "***"+req.body.time);
+		const DATE = tempDate.getFullYear()+"-"+(tempDate.getMonth()+1)+"-"+(tempDate.getDate()+1);
+		const TIME = ((tempDate.getHours()+1)*3600)+((tempDate.getMinutes()+1)*60);
+
+		console.log('Request for '+ FROM+','+ TO+','+ DATE+','+ tempDate.getFullYear()+','+ SORT);
 
 		nextQueryID++;
 		finalResult=[];
-		search(FROM, TO, DATE, TIME, CLASSES, DIRECT, 1, nextQueryID, function(tenresult){
+		search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT, nextQueryID, function(tenresult){
 			finalResult.push({
 				result: tenresult,
 				queryID: nextQueryID,
@@ -161,8 +164,8 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 				classSearch = classSearch + "a.class LIKE '%UNRESERVED%' OR a.class LIKE '%GN%' OR "
 		classSearch = classSearch.substring(0, classSearch.length - 4) + ')'
 
-	direct(FROM, TO, DATE, classSearch, function (direct_result) {
-		indirect(FROM, TO, DATE, classSearch, DIRECT, function (indirect_result) {
+	direct(FROM, TO, DATE, TIME, classSearch, function (direct_result) {
+		indirect(FROM, TO, DATE, TIME, classSearch, DIRECT, function (indirect_result) {
 			result = direct_result.concat(indirect_result);
 						//console.log('final result  '+result)
 			if (result.length != 0) {
@@ -170,18 +173,24 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 				result.sort(function (a, b) {
 					return a.total_duration - b.total_duration;
 				});
+
 				var tenresult = [];
 				for (var x = 0; x < 50; x++) {
 					if (x < result.length)
 						tenresult[x] = result[x];
 				}
 				result = tenresult
+
 				var tempresult = [];
 				var t = 0;
 				for (var i = 0; i < result.length; i++) {
 					if ((result[i].leg)[0].arrival_start >= TIME) {
 						tempresult[t] = result[i];
 						tempresult[t].wait_time = parseInt((result[i].leg)[0].arrival_start) - parseInt(TIME)
+						if((result[i].leg).length>1)
+							tempresult[t].layoverd = parseInt(result[i].total_duration-(((result[i].leg)[0].duration)+(result[i].leg)[1].duration));
+						else
+							tempresult[t].layoverd = parseInt(0);
 						t++;
 					}
 				}
@@ -194,6 +203,7 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 					});
 				}
 				else if (SORT == "2") {
+					console.log('sort 2');
 					result.sort(function (a, b) {
 						if ((a.leg)[0].arrival_start == (b.leg)[0].arrival_start)
 							return a.total_duration - b.total_duration;
@@ -202,6 +212,7 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 					});
 				}
 				else if (SORT == "3") {
+					console.log('sort 3');
 					result.sort(function (a, b) {
 						if (parseInt((a.leg)[a.leg.length - 1].day_def) >= parseInt((b.leg)[b.leg.length - 1].day_def)) {
 							if ((a.leg)[a.leg.length - 1].arrival_end == (b.leg)[b.leg.length - 1].arrival_end && a.day_def == b.day_def)
@@ -221,6 +232,14 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 							return a.wait_time - b.wait_time;
 					});
 				}
+				else if (SORT == "5") {
+					result.sort(function (a, b) {
+						if (a.layoverd == b.layoverd)
+							return a.total_duration - b.total_duration;
+						else
+							return a.layoverd - b.layoverd;
+					});
+				}
 	
 				const VALUES=[nextQueryID, FROM, TO, DATE, TIME, DIRECT, CLASSES];
 				connection.query('SELECT * FROM past_queries WHERE queryID = ' + nextQueryID, function(err, rows, fields){
@@ -238,7 +257,7 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 									else{
 										console.log('query result cached');
 										cacheInstance.get(nextQueryID, function(err, value){
-											console.log('cached data for queryID '+nextQueryID+JSON.stringify(value).length);
+											console.log('cached data for queryID '+nextQueryID);
 										})
 									}
 								});
@@ -252,7 +271,7 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 							else{
 								console.log('query result cached');
 								cacheInstance.get(nextQueryID, function(err, value){
-									console.log('cached data for queryID '+nextQueryID+JSON.stringify(value).length);
+									console.log('cached data for queryID '+nextQueryID);
 								})
 							}
 						});
@@ -270,11 +289,18 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 	});	
 }
 
-function direct(city1, city2, day, classSearch, callback) {
+function direct(city1, city2, day, time, classSearch, callback) {
 	
 	var date = new Date(day)
 	day = dayArr[date.getDay()]
-	var queryString = "select a.station_name as start,b.station_name as end,a.train_id,a.train_name,a.class,TIME_TO_SEC(a.arrival),TIME_TO_SEC(a.departure),TIME_TO_SEC(b.arrival),TIME_TO_SEC(b.departure),TIME_TO_SEC(b.arrival)+((b.arr_day-a.arr_day) *86400)-TIME_TO_SEC(a.departure) AS timeDef,(b.arr_day-a.arr_day) as dayDef from project.train a INNER JOIN project.train as b where a.train_id=b.train_id AND b.station_id=\"" + city2 + "\" AND a.station_id=\"" + city1 + "\" AND a.sno<b.sno AND (a.schedule LIKE '%Daily%' OR a.schedule LIKE '%" + day + "%') AND (a.route_no=b.route_no OR a.route_no=0) " + classSearch + " ORDER by a.train_id";
+	var queryString = "select a.station_name as start,b.station_name as end,a.train_id,a.train_name,a.class"
+		+",TIME_TO_SEC(a.arrival),TIME_TO_SEC(a.departure),TIME_TO_SEC(b.arrival),TIME_TO_SEC(b.departure)"
+		+",TIME_TO_SEC(b.arrival)+((b.arr_day-a.arr_day) *86400)-TIME_TO_SEC(a.arrival) AS timeDef"
+		+",(b.arr_day-a.arr_day) as dayDef from project.train a INNER JOIN project.train as b"
+		+" where a.train_id=b.train_id AND b.station_id=\"" + city2 + "\" AND a.station_id=\"" + city1 + "\" AND a.sno<b.sno"
+		+" AND a.arrival > "+time
+		+" AND (a.schedule LIKE '%Daily%' OR a.schedule LIKE '%" + day + "%') AND (a.route_no=b.route_no OR a.route_no=0) " 
+		+ classSearch + " ORDER by a.train_id";
 	connection.query(queryString, function (err, rows, fields) {
 		if (err) {
 			console.log(err + "\n\n" + queryString);
@@ -316,7 +342,7 @@ function direct(city1, city2, day, classSearch, callback) {
 	});
 }
 
-function indirect(city1, city2, day, classSearch, direct, callback) {
+function indirect(city1, city2, day, time, classSearch, direct, callback) {
 	if(direct=='true')
 		callback([]);
 	else{
@@ -329,7 +355,9 @@ function indirect(city1, city2, day, classSearch, direct, callback) {
 			+",TIME_TO_SEC(a.arrival)+((a.arr_day-b.arr_day) *86400)-TIME_TO_SEC(b.arrival) AS timeDef"
 			+",(a.arr_day-b.arr_day) as dayDef1 from project.train as a INNER JOIN(SELECT * from project.train"
 			+" WHERE station_id=\"" + city1 + "\") as b"
-			+" WHERE a.train_id=b.train_id AND a.sno>b.sno AND (b.schedule LIKE '%Daily%' OR b.schedule LIKE '%" + day + "%')"
+			+" WHERE a.train_id=b.train_id AND a.sno>b.sno"
+			+" AND b.arrival > "+time
+			+" AND (b.schedule LIKE '%Daily%' OR b.schedule LIKE '%" + day + "%')"
 			+"AND (a.route_no=b.route_no OR a.route_no=0)" + classSearch + "";
 		console.log(queryString)
 		connection.query(queryString, function (err, rows, fields) {
