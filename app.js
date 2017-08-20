@@ -37,7 +37,7 @@ app.use(express.static(path.resolve(__dirname,'reacthopper', 'build')));
 connection.connect();
 
 var nextQueryID = 0;
-connection.query("SELECT MAX(queryID) as max_queryID FROM past_queries", function(err, rows, fields){
+connection.query("SELECT MAX(queryID) as max_queryID FROM project.past_queries", function(err, rows, fields){
 	if(err)
 		console.log(err)
 	else{
@@ -105,7 +105,7 @@ app.post('/paginationdroid', function(req, res){
 			res.status(200).send(JSON.stringify(tenresult));		
 		}else{
 			console.log('cache data not available for queryID '+queryID);
-			connection.query("SELECT * FROM past_queries WHERE queryID = "+queryID, function(err, rows, fields){
+			connection.query("SELECT * FROM project.past_queries WHERE queryID = "+queryID, function(err, rows, fields){
 				if(err)
 					console.log(err);
 				else{
@@ -136,10 +136,11 @@ app.post('/resultsdroid', function (req, res) {
 
 		nextQueryID++;
 		finalResult=[];
-		search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT, nextQueryID, function(tenresult){
+		search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT, nextQueryID, function(tenresult, totalResults){
 			finalResult.push({
 				result: tenresult,
 				queryID: nextQueryID,
+				totalResults: totalResults,
 			})
 			res.setHeader('Content-Type', 'application/json');
 			res.status(200).send(JSON.stringify(finalResult));
@@ -246,11 +247,11 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 				}
 	
 				const VALUES=[nextQueryID, FROM, TO, DATE, TIME, DIRECT, CLASSES];
-				connection.query('SELECT * FROM past_queries WHERE queryID = ' + nextQueryID, function(err, rows, fields){
+				connection.query('SELECT * FROM project.past_queries WHERE queryID = ' + nextQueryID, function(err, rows, fields){
 					if(err)
 						console.log(err)
 					else if(rows.length == 0){
-						connection.query('INSERT INTO past_queries VALUES(?)', [VALUES], function(err, result2){
+						connection.query('INSERT INTO project.past_queries VALUES(?)', [VALUES], function(err, result2){
 							if(err)
 								console.log(err)
 							else{
@@ -288,7 +289,7 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT,nextQueryID, callbac
 						tenresult[x] = result[x];
 				}
 			}
-			callback(tenresult);
+			callback(tenresult, result.length);
 		});
 	});	
 }
