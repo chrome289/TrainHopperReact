@@ -103,7 +103,7 @@ app.post('/paginationdroid', function(req, res) {
 		} else if (value != undefined) {
 			var result = JSON.parse(JSON.stringify(value))
 				//console.log('pagination initial' +JSON.stringify(result)+' for '+queryID)
-			console.log('result length ' + result.length)
+		//	console.log('result length ' + result.length)
 			tenresult = [];
 			for (var x = (10 * page), y = 0; x < ((10 * page) + 10), y < 10; x++, y++) {
 				if (x < result.length) {
@@ -230,14 +230,30 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT, nextQueryID, callba
 				else if (SORT == "2") {
 					console.log('sort 2');
 					result.sort(function(a, b) {
-						if (parseInt((a.leg)[a.leg.length - 1].day_def) >= parseInt((b.leg)[b.leg.length - 1].day_def)) {
+						if (parseInt((a.leg)[a.leg.length - 1].day_def) == parseInt((b.leg)[b.leg.length - 1].day_def)) {
+							if((a.leg)[a.leg.length - 1].arrival_end == (b.leg)[b.leg.length - 1].arrival_end)
+								return a.total_duration - b.total_duration;
+							else
+								return (a.leg)[a.leg.length - 1].arrival_end - (b.leg)[b.leg.length - 1].arrival_end;
+						}else if (parseInt((a.leg)[a.leg.length - 1].day_def) < parseInt((b.leg)[b.leg.length - 1].day_def)){
+							var day_def_def = parseInt((b.leg)[b.leg.length - 1].day_def) - parseInt((a.leg)[a.leg.length - 1].day_def);
+							return (a.leg)[a.leg.length - 1].arrival_end - ((b.leg)[b.leg.length - 1].arrival_end+ (86400 * day_def_def));
+						}else{
+							var day_def_def = parseInt((a.leg)[a.leg.length - 1].day_def) - parseInt((b.leg)[b.leg.length - 1].day_def);
+							return ((a.leg)[a.leg.length - 1].arrival_end + (86400 * day_def_def)) - (b.leg)[b.leg.length - 1].arrival_end;
+						}
+
+						/*if (parseInt((a.leg)[a.leg.length - 1].day_def) >= parseInt((b.leg)[b.leg.length - 1].day_def)) {
 							if ((a.leg)[a.leg.length - 1].arrival_end == (b.leg)[b.leg.length - 1].arrival_end && a.day_def == b.day_def)
 								return a.total_duration - b.total_duration;
 							else
 								return (a.leg)[a.leg.length - 1].arrival_end - (b.leg)[b.leg.length - 1].arrival_end;
 						} else
-							return ((parseInt((a.leg)[a.leg.length - 1].day_def) - parseInt((b.leg)[b.leg.length - 1].day_def))*86400);
+							return ((parseInt((a.leg)[a.leg.length - 1].day_def) - parseInt((b.leg)[b.leg.length - 1].day_def))*86400);*/
 					});
+					/*for(er=0;er<result.length;er++){
+						console.log((result[er].leg)[result[er].leg.length-1].day_def + "  ^^^  "+ (result[er].leg)[result[er].leg.length-1].arrival_end);
+					}*/
 				} else if (SORT == "3") {
 					result.sort(function(a, b) {
 						if (a.wait_time == b.wait_time)
@@ -336,7 +352,7 @@ function direct(city1, city2, day, time, classSearch, callback) {
 					});
 					//console.log("leg me up ::::::::"+(temp[0].leg)[0].train_id)
 				}
-				console.log('direct result ' + temp);
+			//	console.log('direct result ' + temp);
 				callback(temp);
 			} else {
 				//console.log('direct result '+temp);
@@ -373,7 +389,8 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 						for (x = 0; x < rows.length; x++) {
 							for (y = 0; y < rows2.length; y++) {
 								if (rows[x].station_id == rows2[y].station_id) {
-									//layover               
+									//layover              
+									var layoverd = 0; 
 									var totalTime = rows[x].timeDef + rows2[y].timeDef
 									var day2 = dayArr[dayArr.indexOf(day) + rows[x].dayDef]
 									if (rows2[y].schedule.indexOf('Daily') > -1) {
@@ -381,6 +398,7 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 											totalTime = totalTime + (rows2[y].arrivalCol - rows[x].arrivalCol)
 										} else {
 											totalTime = totalTime + 86400 - (rows[x].arrivalCol - rows2[y].arrivalCol)
+											layoverd++;
 										}
 									} else {
 										temp2 = dayArr.indexOf(day2)
@@ -389,9 +407,11 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 											if (rows2[y].schedule.indexOf(dayArr[z % 7]) > -1) {
 												if (rows[x].arrivalCol < rows2[y].arrivalCol) {
 													totalTime = totalTime + ((z - temp2) * 86400) + (rows2[y].arrivalCol - rows[x].arrivalCol)
+													layoverd += (z-temp2);
 												} else {
 													// console.log(totalTime+' '+z+'   '+temp2+'   '+rows[x].arrivalCol+'   '+rows2[y].arrivalCol)
-													totalTime = totalTime + ((z - temp2 + 1) * 86400) - (rows[x].arrivalCol - rows2[y].arrivalCol)
+													totalTime = totalTime + ((z - temp2 + 1) * 86400) - (rows[x].arrivalCol - rows2[y].arrivalCol);
+													layoverd += (z-temp2+1);
 												}
 												break;
 											} else {
@@ -401,6 +421,7 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 											}
 										}
 									}
+									layoverd += (+rows2[y].dayDef2) + (+rows[x].dayDef1);
 									// totalTime = parseInt(totalTime/60/60)+':'+parseInt(totalTime/60%60);
 									//a & b are reversed for some reason in the first query
 									tempB = ({
@@ -422,7 +443,7 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 										train_id: rows2[y].train_id,
 										train_name: rows2[y].train_name,
 										train_class: rows2[y].class,
-										day_def: (+rows2[y].dayDef2) + (+rows[x].dayDef1), //unary conversion to nos
+										day_def: layoverd, //unary conversion to nos
 
 										id_start: rows[x].station_id,
 										id_end: city2,
@@ -437,9 +458,9 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 									legs[0] = tempB;
 									legs[1] = tempC;
 									temps.push({
-											leg: legs,
-											total_duration: totalTime,
-										})
+										leg: legs,
+										total_duration: totalTime,
+									})
 										//console.log("leg me up ::::::::"+(temps[0].leg)[1].train_id)
 										// console.log(rows[x].train_id+'    '+rows[x].station_id+'----------'+rows2[y].train_id+'    '+rows2[y].station_id+'    '+totalTime+'    '+z)
 								}
