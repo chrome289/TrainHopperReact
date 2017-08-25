@@ -45,7 +45,7 @@ export function requestRoutes(station1, station2, date) {
 }
 
 export function receiveRoutes(json) {
-	console.log(json);
+	console.log("^^^"+json.result+"^^^");
   return {
     type: RECEIVE_ROUTES,
     routes: json.result,
@@ -53,12 +53,18 @@ export function receiveRoutes(json) {
 }
 
 export function fetchRoutes(station1, station2, date){
+  //var params = {from: station1, to: station2, direct: "false", classes: "['a1','a2','a3','sl']", sort: 1, utcoffset: 19800000, time: date }
+  //console.log(params.to+"$$$"+params.from);
 	return(function(dispatch){
 		dispatch(requestRoutes())
-		var url = new URL("http://192.168.1.6:3001/results"),
-    	params = {from: station1, to: station2, date: date}
-		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
-		return fetch(url)
+		var url = new URL("http://192.168.1.6:8081/results");
+		return fetch(url, {
+        method: 'POST',
+        headers: new Headers({
+          'Content-Type': 'application/x-www-form-urlencoded', // <-- Specifying the Content-Type
+        }),
+        body: "from="+"LKO"+"&to="+"NDLS"+"&direct=false&classes=['a1','a2','a3','sl']&sort=1&utcoffset=19800000&time="+"1503469584000"
+      })
 			.then((response) => {
        return response.json() // << This is the problem
     })

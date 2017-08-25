@@ -37,7 +37,7 @@ html {
   width: 100%;
   background: url(background.jpg) center/cover; 
   background-blend-mode: overlay; 
-  background-color: #232323;
+  background-color: #343434;
   background-repeat: no-repeat;
   position: relative;
   color: #fff;
@@ -251,6 +251,7 @@ html {
 
 .searchResult{
   width: 95%;
+  color: #000;
   display: inline-flex;
   background-color: #fff;
   margin: 1px auto;
@@ -263,6 +264,36 @@ html {
   margin: auto 0px;
   color: #232323;
 }
+
+.direct{
+  font-size: 0.75rem;
+  color: rgb(255, 255, 255);
+  margin: 0 auto;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.totalduration{
+  font-size: 1.25rem;
+  color: rgb(255, 255, 255);
+  margin: 0 auto;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+
+
+
+
+
+
+
 
 .arrow_box {
   position: relative;

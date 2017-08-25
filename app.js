@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
 	/*host     : 'localhost',
 	user     : 'root',
 	password : '28julius9',
-	database : 'project',/*/
+	database : 'project',*/
 	host: process.env.RDS_HOSTNAME,
 	user: process.env.RDS_USERNAME,
 	password: process.env.RDS_PASSWORD,
@@ -28,6 +28,8 @@ app.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
+
+app.set('trust proxy', 2)
 
 // Serve static assets
 app.use(express.static(path.resolve(__dirname, 'reacthopper', 'build')));
@@ -57,36 +59,42 @@ app.use(bodyParser.urlencoded({
 
 // Always return the main index.html, so react-router render the route in the client
 app.get('/', (req, res) => {
+	console.log('Request from IP address:', req.ip);
 	res.sendFile(path.resolve(__dirname, 'reacthopper', 'build', 'index.html'));
 });
 
-app.get('/results', function(req, res) {
-	FROM = req.query.from.toUpperCase();
-	TO = req.query.to.toUpperCase();
-	DATE = req.query.date;
-	direct(FROM, TO, DATE, function(direct_result) {
-		var result = direct_result
-		result.sort(function(a, b) {
-			return a.total_duration - b.total_duration;
-		});
-		for (var i = result.length - 1; i >= 0; i--) {
-			result[i].departure = parseInt(result[i].departure / 3600) + ':' + parseInt(result[i].departure / 60 % 60)
-			result[i].arrival = parseInt(result[i].arrival / 3600) + ':' + parseInt(result[i].arrival / 60 % 60)
-			result[i].total_duration = parseInt(result[i].total_duration / 3600) + ':' + parseInt(result[i].total_duration / 60 % 60)
-		}
-		console.log('results ' + result.length)
+app.post('/results', function(req, res) {
+	console.log('Request from IP address:', req.ip);
+	//console.log(req.body);
+	const FROM = req.body.from.toUpperCase();
+	const TO = req.body.to.toUpperCase();
+	const DIRECT = req.body.direct;
+	const CLASSES = req.body.classes;
+	const SORT = req.body.sort;
+	const UTC_OFFSET = req.body.utcoffset;
 
+	var tempDate = new Date(Number(req.body.time) + Number(UTC_OFFSET));
+	//console.log(tempDate + "***" + tempDate.getUTCFullYear() + "***" + req.body.time);
+	const DATE = tempDate.getUTCFullYear() + "-" + (tempDate.getUTCMonth() + 1) + "-" + (tempDate.getUTCDate() + 1);
+	const TIME = ((tempDate.getUTCHours()) * 3600) + ((tempDate.getUTCMinutes()) * 60);
+
+	console.log('Request for ' + FROM + ',' + TO + ',' + DATE + ',' + tempDate.getUTCFullYear() + ',' + SORT);
+
+	nextQueryID++;
+	finalResult = [];
+	search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT, nextQueryID, function(tenresult, totalResults) {
+		//finalResult.push()
 		res.setHeader('Content-Type', 'application/json');
-		res.status(200).json({
-			result: result,
-			from: FROM,
-			to: TO,
-			date: DATE
-		});
+		res.status(200).send(JSON.stringify({
+			result: tenresult,
+			queryID: nextQueryID,
+			totalResults: totalResults,
+		}));
 	});
 });
 
 app.post('/paginationdroid', function(req, res) {
+	console.log('Request from IP address:', req.ip);
 	var queryID = req.body.queryID;
 	var page = req.body.page;
 	cacheInstance.get(queryID, function(err, value) {
@@ -122,7 +130,8 @@ app.post('/paginationdroid', function(req, res) {
 });
 
 app.post('/resultsdroid', function(req, res) {
-
+	console.log('Request from IP address:', req.ip);
+//console.log(req.body);
 	const FROM = req.body.from.toUpperCase();
 	const TO = req.body.to.toUpperCase();
 	const DIRECT = req.body.direct;
@@ -131,7 +140,7 @@ app.post('/resultsdroid', function(req, res) {
 	const UTC_OFFSET = req.body.utcoffset;
 
 	var tempDate = new Date(Number(req.body.time) + Number(UTC_OFFSET));
-	console.log(tempDate + "***" + tempDate.getUTCFullYear() + "***" + req.body.time);
+	//console.log(tempDate + "***" + tempDate.getUTCFullYear() + "***" + req.body.time);
 	const DATE = tempDate.getUTCFullYear() + "-" + (tempDate.getUTCMonth() + 1) + "-" + (tempDate.getUTCDate() + 1);
 	const TIME = ((tempDate.getUTCHours()) * 3600) + ((tempDate.getUTCMinutes()) * 60);
 
@@ -227,7 +236,7 @@ function search(FROM, TO, DATE, TIME, CLASSES, DIRECT, SORT, nextQueryID, callba
 							else
 								return (a.leg)[a.leg.length - 1].arrival_end - (b.leg)[b.leg.length - 1].arrival_end;
 						} else
-							return false;
+							return ((parseInt((a.leg)[a.leg.length - 1].day_def) - parseInt((b.leg)[b.leg.length - 1].day_def))*86400);
 					});
 				} else if (SORT == "3") {
 					result.sort(function(a, b) {
@@ -443,5 +452,18 @@ function indirect(city1, city2, day, time, classSearch, direct, callback) {
 		});
 	}
 }
+
+
+//sinkhole
+app.all('*',function(req, res){
+	var ip =req.headers['x-forwarded-for'] || 
+     req.connection.remoteAddress || 
+     req.socket.remoteAddress ||
+     req.connection.socket.remoteAddress;
+	console.log('Request from IP address:', ip);
+	console.log('Request from IP address:', req.ip);
+	console.log('Request from IP address:', req.ips);
+	res.send('This is not the reward that you were promised');
+})
 
 module.exports = app;
